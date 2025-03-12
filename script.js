@@ -1,95 +1,70 @@
-// Create the scene
 const scene = new THREE.Scene();
-
-// Set up a perspective camera: fov, aspect, near, far
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.z = 5;
-
-// Create the WebGL renderer and append its canvas to the document
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 15;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-
-// Add OrbitControls to allow camera movement via mouse
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;      // Enable smooth damping (inertia)
-controls.dampingFactor = 0.05;        // Adjust damping factor as needed
+controls.enableDamping = true; controls.dampingFactor = 0.05;
 
-// Add a directional light to the scene
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(1, 1, 1);
+const directionalLight = new THREE.DirectionalLight(0x0000ff, 1);
+directionalLight.position.set(1,1,1);
 scene.add(directionalLight);
 
-// Load a vibrant Earth texture using TextureLoader
+const hemisphereLight = new THREE.HemisphereLight(0x00ff00, 0x99ff99, 1);
+scene.add(hemisphereLight);
+
+const pointLight = new THREE.PointLight(0xff0000, 1, 100);
+pointLight.position.set(5,5,5);
+scene.add(pointLight);
+
 const textureLoader = new THREE.TextureLoader();
 const earthTexture = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
-
-// Create a material using the Earth texture
 const texturedMaterial = new THREE.MeshStandardMaterial({ map: earthTexture });
 
-// --- Step 1 & 2: Create multiple textured cubes ---
-const cubes = [];
-const geometry = new THREE.BoxGeometry();
-
-// Create 5 cubes at random positions
-for (let i = 0; i < 5; i++) {
-  const cube = new THREE.Mesh(geometry, texturedMaterial);
-  cube.position.x = (Math.random() - 0.5) * 10;
-  cube.position.y = (Math.random() - 0.5) * 10;
-  cube.position.z = (Math.random() - 0.5) * 10;
-  cubes.push(cube);
-  scene.add(cube);
-}
-
-// --- Step 3: Load a custom 3D model (cow) using OBJLoader ---
 const objLoader = new THREE.OBJLoader();
 objLoader.load(
   'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/cow.obj',
-  function (object) {
-    // Apply the textured material to each mesh in the object
-    object.traverse(function(child) {
-      if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshStandardMaterial({ map: earthTexture });
-      }
+  object => {
+    object.traverse(child => {
+      if (child instanceof THREE.Mesh) child.material = new THREE.MeshStandardMaterial({ map: earthTexture });
     });
-    // Adjust the scale and position of the model as needed
-    object.scale.set(0.5, 0.5, 0.5);
-    object.position.set(0, -1, 0);
+    object.scale.set(0.5,0.5,0.5);
+    object.position.set(-5,-1,0);
     scene.add(object);
   },
-  function (xhr) {
-    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-  },
-  function (error) {
-    console.error('An error happened', error);
-  }
+  xhr => console.log((xhr.loaded / xhr.total * 100) + '% loaded (cow)'),
+  error => console.error('Error loading cow model', error)
 );
 
-// --- Animation Loop ---
+const shapes = [];
+for (let i = 0; i < 20; i++) {
+  const type = Math.floor(Math.random()*3);
+  const size = Math.random()*1.5+0.5;
+  let geometry;
+  if (type === 0) geometry = new THREE.BoxGeometry(size, size, size);
+  else if (type === 1) geometry = new THREE.SphereGeometry(size, 16, 16);
+  else geometry = new THREE.CylinderGeometry(size, size, size*1.5, 16);
+  const mesh = new THREE.Mesh(geometry, texturedMaterial);
+  mesh.position.x = (Math.random()-0.5)*30;
+  mesh.position.y = (Math.random()-0.5)*30;
+  mesh.position.z = (Math.random()-0.5)*30;
+  mesh.rotation.x = Math.random()*Math.PI;
+  mesh.rotation.y = Math.random()*Math.PI;
+  scene.add(mesh);
+  shapes.push(mesh);
+}
+
 function animate() {
   requestAnimationFrame(animate);
-
-  // Update controls (required when enableDamping is true)
   controls.update();
-
-  // Rotate each cube for a dynamic effect
-  cubes.forEach(cube => {
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-  });
-
+  shapes.forEach(shape => { shape.rotation.x += 0.005; shape.rotation.y += 0.005; });
   renderer.render(scene, camera);
 }
 animate();
 
-// Adjust camera and renderer on window resize
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
