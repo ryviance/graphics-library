@@ -3,9 +3,9 @@ const scene = new THREE.Scene();
 
 // Set up a perspective camera: fov, aspect, near, far
 const camera = new THREE.PerspectiveCamera(
-  75, 
-  window.innerWidth / window.innerHeight, 
-  0.1, 
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
   1000
 );
 camera.position.z = 5;
@@ -14,6 +14,11 @@ camera.position.z = 5;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// Add OrbitControls to allow camera movement via mouse
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;      // Enable smooth damping (inertia)
+controls.dampingFactor = 0.05;        // Adjust damping factor as needed
 
 // Add a directional light to the scene
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -42,18 +47,17 @@ for (let i = 0; i < 5; i++) {
 }
 
 // --- Step 3: Load a custom 3D model (cow) using OBJLoader ---
-// The cow model is loaded from a GitHub repository containing common 3D test models.
 const objLoader = new THREE.OBJLoader();
 objLoader.load(
   'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/cow.obj',
   function (object) {
-    // Traverse the loaded object to apply the textured material to each mesh
+    // Apply the textured material to each mesh in the object
     object.traverse(function(child) {
       if (child instanceof THREE.Mesh) {
         child.material = new THREE.MeshStandardMaterial({ map: earthTexture });
       }
     });
-    // Adjust the scale and position of the cow model as needed
+    // Adjust the scale and position of the model as needed
     object.scale.set(0.5, 0.5, 0.5);
     object.position.set(0, -1, 0);
     scene.add(object);
@@ -69,13 +73,16 @@ objLoader.load(
 // --- Animation Loop ---
 function animate() {
   requestAnimationFrame(animate);
-  
+
+  // Update controls (required when enableDamping is true)
+  controls.update();
+
   // Rotate each cube for a dynamic effect
   cubes.forEach(cube => {
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
   });
-  
+
   renderer.render(scene, camera);
 }
 animate();
