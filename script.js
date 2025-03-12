@@ -1,4 +1,5 @@
 const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xcce0ff, 10, 50);
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 cubeTextureLoader.setPath('https://threejs.org/examples/textures/cube/Bridge2/');
