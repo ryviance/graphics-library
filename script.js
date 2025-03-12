@@ -20,15 +20,14 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(1, 1, 1);
 scene.add(directionalLight);
 
-// Load a more colorful texture using TextureLoader
+// Load a vibrant Earth texture using TextureLoader
 const textureLoader = new THREE.TextureLoader();
-// Using a vibrant Earth texture from the Three.js examples
 const earthTexture = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
 
-// Create a standard material using the loaded Earth texture
+// Create a material using the Earth texture
 const texturedMaterial = new THREE.MeshStandardMaterial({ map: earthTexture });
 
-// Create multiple textured cubes using the Earth texture on all faces
+// --- Step 1 & 2: Create multiple textured cubes ---
 const cubes = [];
 const geometry = new THREE.BoxGeometry();
 
@@ -42,10 +41,36 @@ for (let i = 0; i < 5; i++) {
   scene.add(cube);
 }
 
-// Animation loop to update cube rotations and render the scene
+// --- Step 3: Load a custom 3D model (cow) using OBJLoader ---
+// The cow model is loaded from a GitHub repository containing common 3D test models.
+const objLoader = new THREE.OBJLoader();
+objLoader.load(
+  'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/cow.obj',
+  function (object) {
+    // Traverse the loaded object to apply the textured material to each mesh
+    object.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshStandardMaterial({ map: earthTexture });
+      }
+    });
+    // Adjust the scale and position of the cow model as needed
+    object.scale.set(0.5, 0.5, 0.5);
+    object.position.set(0, -1, 0);
+    scene.add(object);
+  },
+  function (xhr) {
+    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+  },
+  function (error) {
+    console.error('An error happened', error);
+  }
+);
+
+// --- Animation Loop ---
 function animate() {
   requestAnimationFrame(animate);
   
+  // Rotate each cube for a dynamic effect
   cubes.forEach(cube => {
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
@@ -55,31 +80,9 @@ function animate() {
 }
 animate();
 
-// Adjust camera and renderer when the window is resized
+// Adjust camera and renderer on window resize
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-/* 
-// --- Alternative: Mapping 6 Different Textures onto a Cube ---
-// Uncomment the following section and comment out the single-texture approach above
-// to apply a different texture on each face of the cube.
-
-// const faceTextures = [
-//   textureLoader.load('path/to/texture1.jpg'),
-//   textureLoader.load('path/to/texture2.jpg'),
-//   textureLoader.load('path/to/texture3.jpg'),
-//   textureLoader.load('path/to/texture4.jpg'),
-//   textureLoader.load('path/to/texture5.jpg'),
-//   textureLoader.load('path/to/texture6.jpg')
-// ];
-//
-// // Create an array of materials corresponding to each face
-// const materials = faceTextures.map(texture => new THREE.MeshStandardMaterial({ map: texture }));
-//
-// // When constructing the mesh, pass the array of materials
-// const cubeWithDifferentFaces = new THREE.Mesh(geometry, materials);
-// scene.add(cubeWithDifferentFaces);
-*/

@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Textured Three.js Scene</title>
+  <title>Three.js Scene with Custom 3D Model</title>
   <style>
     body { margin: 0; }
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <!-- Use a stable version of Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r132/three.min.js"></script>
-  <!-- Include the external JavaScript file -->
+  <!-- Load Three.js from jsDelivr (version r132) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <!-- Load OBJLoader from jsDelivr (matching version) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/OBJLoader.js"></script>
+  <!-- Include your custom script -->
   <script src="script.js"></script>
 </body>
 </html>
