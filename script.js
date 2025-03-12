@@ -17,7 +17,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.05;
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
 
 const directionalLight = new THREE.DirectionalLight(0x0000ff, 1);
 directionalLight.position.set(1,1,1);
@@ -32,20 +33,6 @@ scene.add(pointLight);
 
 const textureLoader = new THREE.TextureLoader();
 const earthTexture = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
-const texturedMaterial = new THREE.MeshStandardMaterial({ map: earthTexture });
-
-const objLoader = new THREE.OBJLoader();
-objLoader.load(
-  'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/cow.obj',
-  object => {
-    object.traverse(child => { if(child instanceof THREE.Mesh) child.material = new THREE.MeshStandardMaterial({ map: earthTexture }); });
-    object.scale.set(0.5,0.5,0.5);
-    object.position.set(-5,-1,0);
-    scene.add(object);
-  },
-  xhr => console.log((xhr.loaded/xhr.total*100)+'% loaded (cow)'),
-  error => console.error('Error loading cow model', error)
-);
 
 const shapes = [];
 for(let i = 0; i < 20; i++){
@@ -55,7 +42,8 @@ for(let i = 0; i < 20; i++){
   if(type === 0) geometry = new THREE.BoxGeometry(size, size, size);
   else if(type === 1) geometry = new THREE.SphereGeometry(size, 16, 16);
   else geometry = new THREE.CylinderGeometry(size, size, size*1.5, 16);
-  const mesh = new THREE.Mesh(geometry, texturedMaterial);
+  const material = new THREE.MeshStandardMaterial({ map: earthTexture });
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.position.x = (Math.random()-0.5)*30;
   mesh.position.y = (Math.random()-0.5)*30;
   mesh.position.z = (Math.random()-0.5)*30;
@@ -64,6 +52,40 @@ for(let i = 0; i < 20; i++){
   scene.add(mesh);
   shapes.push(mesh);
 }
+
+const objLoader = new THREE.OBJLoader();
+objLoader.load(
+  'https://raw.githubusercontent.com/alecjacobson/common-3d-test-models/master/data/cow.obj',
+  object => {
+    object.traverse(child => {
+      if(child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshStandardMaterial({ map: earthTexture });
+        shapes.push(child);  // Push each mesh individually
+      }
+    });
+    object.scale.set(0.5,0.5,0.5);
+    object.position.set(-5,-1,0);
+    scene.add(object);
+  },
+  xhr => console.log((xhr.loaded/xhr.total*100)+'% loaded (cow)'),
+  error => console.error('Error loading cow model', error)
+);
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('mousemove', event => {
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(shapes, true);
+  shapes.forEach(obj => { if(obj.material && obj.material.emissive) obj.material.emissive.set(0x000000); });
+  if(intersects.length > 0){
+    const hovered = intersects[0].object;
+    if(hovered.material && hovered.material.emissive)
+      hovered.material.emissive.set(0xffff00);
+  }
+}, false);
 
 function animate(){
   requestAnimationFrame(animate);
